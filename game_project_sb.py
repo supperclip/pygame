@@ -2,6 +2,8 @@ import pygame, sys
 from pygame.locals import QUIT
 import random
 import math
+from player_class import player
+
 
 pygame.init()
 screen = pygame.display.set_mode((800, 500))
@@ -25,10 +27,17 @@ chainsaw_2 = pygame.transform.scale(chainsaw_2 , (60,60))
 
 turret_1 = pygame.image.load("x/turret_frame_1.png").convert_alpha()
 turret_1 = pygame.transform.scale(turret_1 , (100,100))
+turret_1 = pygame.transform.rotate(turret_1 , (90))
 
 rocket = pygame.image.load("x/rocket_1.png").convert_alpha()
 rocket = pygame.transform.scale(rocket, (30,30))
 turret_1 = pygame.transform.rotate(turret_1 , 270)
+
+player_surface = pygame.Surface((40,40))
+player_surface.fill("red")
+player_rect = player_surface.get_rect()
+player_rect.x = 400
+player_rect.y = 250
 
 
 chainsaw_animation_list = [chainsaw_1 , chainsaw_2]
@@ -37,6 +46,14 @@ current_frame = 0
 frame_offset = 0
 enemy_Xlist = []
 enemy_Ylist = []
+
+A_pressed = False
+D_pressed = False
+S_pressed = False
+W_pressed = False
+
+p1 = player(A_pressed, D_pressed, S_pressed, W_pressed)
+
 
 turret_location = [801, 501]
 
@@ -49,21 +66,37 @@ while True:
             pygame.quit()
             sys.exit() 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_1:
-                turret_location = [127.5,425]
-            if event.key == pygame.K_2:
-                turret_location = [327.5,425]
-            if event.key == pygame.K_3:
-                turret_location = [477.5,425]
-            if event.key == pygame.K_4:
-                turret_location = [677.5,425]
-          
+            if event.key == pygame.K_a:
+                A_pressed = True
+            if event.key == pygame.K_d:
+                D_pressed = True
+            if event.key == pygame.K_s:
+                S_pressed = True
+            if event.key == pygame.K_w:
+                W_pressed = True
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_a:
+                A_pressed = False
+            if event.key == pygame.K_d:
+                 D_pressed = False
+            if event.key == pygame.K_s:
+                S_pressed = False
+            if event.key == pygame.K_w:
+                W_pressed = False
+
+    #background
+    screen.blit(background_surface, (0, 0))
+
+    #player logic
+    screen.blit(player_surface, player_rect)
+    player_rect.x += p1.MoveX_function(D_pressed)
+    player_rect.x += p1.MoveXMinus_function(A_pressed)
+    player_rect.y += p1.MoveY_function(S_pressed)
+    player_rect.y += p1.MoveYMinus_function(W_pressed)
 
     # Mouse logic
     mouse_x, mouse_y = pygame.mouse.get_pos()
 
-    #background
-    screen.blit(background_surface, (0, 0))
 
     #turret logic
     screen.blit(sentry_picture, (100,400))
@@ -71,25 +104,13 @@ while True:
     screen.blit(sentry_picture, (450,400))
     screen.blit(sentry_picture, (650,400))
 
-    #screen.blit(turret_1 , (turret_location))
-
-    #rotate turret to mouse
-    TrotX = mouse_x - turret_location[0]
-    TrotY = mouse_y - turret_location[1]
-    Tdist = math.hypot(TrotX, TrotY)
-    Tdist += 0.000001 #fixes the crash, hopefuly?
-    TdirX = TrotX / Tdist
-    TdirY = TrotY / Tdist
-    Tangle_radians = math.atan2(TrotY, TrotX) 
-    Tangle_degrees = math.degrees(Tangle_radians)
-    rotated_turret = pygame.transform.rotate(turret_1, -Tangle_degrees)
-    turret_rect = rotated_turret.get_rect(center=(turret_location[0], turret_location[1]))
-
-    screen.blit(rotated_turret , (turret_rect.topleft))
-
-
-
+    screen.blit(turret_1, (82.5,385.5))
+    screen.blit(turret_1, (282.5,385.5))
+    screen.blit(turret_1, ((82.5 + 350),385.5))
+    screen.blit(turret_1, ((82.5 + 550) ,385.5))
     
+    screen.blit(turret_1 , (turret_location))
+
     #enemy logic
     current_frame += 1
     if current_frame % 15 == 0:  
@@ -127,7 +148,6 @@ while True:
         rotated_rect = rotated_enemy.get_rect(center=(enemy_coords[0], enemy_coords[1]))
 
         screen.blit(rotated_enemy, rotated_rect.topleft)
-
 
     pygame.display.update()
     clock.tick(60)
